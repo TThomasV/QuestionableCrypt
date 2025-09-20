@@ -186,7 +186,7 @@ class CryptProtocol:
         self.pre_shared_key_rotated = False
 
 
-def main() -> bool:
+def main() -> None:
     initial_key: bytes = CryptProtocol.generate_random_psk()
 
     alice: CryptProtocol = CryptProtocol(initial_key)
@@ -206,7 +206,31 @@ def main() -> bool:
     alice.finalize()
     bob.finalize()
 
-    return constant_time.bytes_eq(initial_msg, decrypted_msg)
+    # Check everything matches
+    result: bool = constant_time.bytes_eq(initial_msg, decrypted_msg)
+    print("Messages match? ", result)
+
+    # Check roll over for next session
+    alice_initial_message_2 = alice.generate_initial_message(bob)
+    bob.parse_initial_message(alice_initial_message_2, alice)
+
+    bob_initial_message_2: bytes = bob.generate_initial_message(alice)
+    alice.parse_initial_message(bob_initial_message_2, bob)
+
+    second_msg: bytes = b"Oh hello again!"
+    encrypted_msg = alice.encrypt(second_msg)
+    decrypted_msg = bob.decrypt(encrypted_msg)
+
+    # Finalize the objects again
+    alice.finalize()
+    bob.finalize()
+
+    result = constant_time.bytes_eq(second_msg, decrypted_msg)
+    print("Messages match? ", result)
+
+    # Replay attack - This will get the objects into a weird state, i know
+    # This should go kaboom
+    bob.parse_initial_message(alice_initial_message, alice)
 
 
 if __name__ == "__main__":
