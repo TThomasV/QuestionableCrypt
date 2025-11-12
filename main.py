@@ -17,6 +17,11 @@ class SessionKeyNotEstablishedError(Exception):
 
 
 class CryptProtocol:
+    # Warning! 
+    # It should be noted the current implemntation does nothing to prevent:
+    # - Using the same IV/nounce across multiple messages in the same session
+    # - Replay attacks by sending the same message over and over again in the same session
+    
     AES_KEY_SIZE: int = 32
     AES_NONCE_SIZE: int = 12
     SIGNATURE_SIZE: int = 64
